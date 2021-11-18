@@ -30,6 +30,7 @@ async function playSong(songTerm, messageHere, connector) {
       const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', highWaterMark: 1<<25});
       const resource = createAudioResource(youtubeSong);
       player.play(resource)
+      messageHere.channel.send(`Playing ${videoResult.url}`)
       player.on('error', error => {
         console.error(`Error: ${error.message} with resource`);
     });    
@@ -76,6 +77,7 @@ client.on("messageCreate", (message) => {
   }
   if (userMessage.startsWith(prefix + "stop")) {
     player.stop()
+    message.channel.send("Music stopped and playlist cleared.")
   }
   // console.log(`Message from ${message.author.username}: ${message.content}`);
 });
