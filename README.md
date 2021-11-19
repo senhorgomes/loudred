@@ -12,6 +12,11 @@ Or type in the following command
 
 To make Loudred stop playing all music
 
+To pause and resume the music, you can use the following commands.
+
+>!pause
+>!resume
+
 More commands to come!
 
 * Implemented in Javascript using, FFMPEG, discord.js, yt-search, & ytdl-core.
