@@ -3,7 +3,7 @@ const { Client, Intents } = require('discord.js');
 const ytdl = require('ytdl-core');
 // const { YTSearcher } = require('ytsearcher');
 const ytSearch = require('yt-search');
-const { createAudioPlayer, createAudioResource, joinVoiceChannel }= require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus }= require('@discordjs/voice');
 
 
 
@@ -15,7 +15,7 @@ const player = createAudioPlayer();
 client.on("ready", () => {
   console.log("I'm online!")
 })
-const playlistQueue = [];
+let playlistQueue = [];
 
 async function playSong(songTerm, messageHere, connector) {
   try {
@@ -28,24 +28,27 @@ async function playSong(songTerm, messageHere, connector) {
     }
     const videoResult = await video_finder(songTerm);
     if (videoResult) {
-      const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', highWaterMark: 1<<25});
       //videoresult.title and videoresult.url are the required to be added
-      const resource = createAudioResource(youtubeSong);
-      player.play(resource)
-      messageHere.channel.send(`Playing ${videoResult.url}`)
-      player.on('error', error => {
-        console.error(`Error: ${error.message} with resource`);
-    });    
-    connector.subscribe(player)
-    }
-    // const youtubeSong = ytdl(searchResultURL, {filter: 'audioonly'});
-    // const resource = createAudioResource(youtubeSong);
-    // player.play(resource)
-    // player.on('error', error => {
-    //   console.error(`Error: ${error.message} with resource ${error.resource.metadata.title}`);
-    // });    
-    // connector.subscribe(player)
+      let newSongInQueue = {};
+      if (playlistQueue.length >= 1) {
 
+      } else {
+        const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', highWaterMark: 1<<25});
+        newSongInQueue = {
+          title: videoResult.title,
+          url: videoResult.url
+        }
+        playlistQueue.push(newSongInQueue)
+        const resource = createAudioResource(youtubeSong);
+        player.play(resource)
+        messageHere.channel.send(`Playing ${videoResult.url}`)
+        player.on('error', error => {
+          console.error(`Error: ${error.message} with resource`);
+        });
+        console.log(playlistQueue);
+        connector.subscribe(player)
+      }
+    }
   } finally {
     console.log("yay")
 
@@ -74,18 +77,21 @@ client.on("messageCreate", (message) => {
   }
   if (userMessage.startsWith(prefix + "stop")) {
     player.stop()
+    playlistQueue = []
     message.channel.send("Music stopped and playlist cleared.")
   }
   if (userMessage.startsWith(prefix + "pause")) {
     player.pause()
-    message.channel.send("Music has been paused. Use !resume to resume play.")
+    message.channel.send("Music has been paused. Use command !resume to resume play.")
   }
   if (userMessage.startsWith(prefix + "resume")) {
     player.unpause()
     message.channel.send("Music has been resumed.")
   }
 });
-
+player.on(AudioPlayerStatus.Idle, () => {
+	console.log('The audio player has ended!');
+});
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
 
