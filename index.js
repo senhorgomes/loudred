@@ -15,6 +15,7 @@ const player = createAudioPlayer();
 client.on("ready", () => {
   console.log("I'm online!")
 })
+const playlistQueue = [];
 
 async function playSong(songTerm, messageHere, connector) {
   try {
@@ -28,6 +29,7 @@ async function playSong(songTerm, messageHere, connector) {
     const videoResult = await video_finder(songTerm);
     if (videoResult) {
       const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', highWaterMark: 1<<25});
+      //videoresult.title and videoresult.url are the required to be added
       const resource = createAudioResource(youtubeSong);
       player.play(resource)
       messageHere.channel.send(`Playing ${videoResult.url}`)
@@ -65,11 +67,6 @@ client.on("messageCreate", (message) => {
   });
   if (userMessage.startsWith(prefix + "play")) {
 
-    // const youtubeSong = ytdl(youtubeSearchTerm, {filter: 'audioonly'});
-    // const resource = createAudioResource(youtubeSong);
-    // player.play(resource)
-    // connection.subscribe(player)
-
     playSong(youtubeSearchTerm, message, connection)
       .catch(error => console.log(error))
       .then(() => console.log("Playing Song"))
@@ -79,7 +76,14 @@ client.on("messageCreate", (message) => {
     player.stop()
     message.channel.send("Music stopped and playlist cleared.")
   }
-  // console.log(`Message from ${message.author.username}: ${message.content}`);
+  if (userMessage.startsWith(prefix + "pause")) {
+    player.pause()
+    message.channel.send("Music has been paused. Use !resume to resume play.")
+  }
+  if (userMessage.startsWith(prefix + "resume")) {
+    player.unpause()
+    message.channel.send("Music has been resumed.")
+  }
 });
 
 client.on('interactionCreate', async interaction => {
