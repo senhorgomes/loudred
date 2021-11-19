@@ -31,9 +31,14 @@ async function playSong(songTerm, messageHere, connector) {
       //videoresult.title and videoresult.url are the required to be added
       let newSongInQueue = {};
       if (playlistQueue.length >= 1) {
-
+        newSongInQueue = {
+          title: videoResult.title,
+          url: videoResult.url
+        }
+        playlistQueue.push(newSongInQueue)
+        messageHere.channel.send(`Added ${videoResult.url} to the playlist`)
       } else {
-        const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', highWaterMark: 1<<25});
+        const youtubeSong = ytdl(videoResult.url, {filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1<<25});
         newSongInQueue = {
           title: videoResult.title,
           url: videoResult.url
@@ -69,7 +74,6 @@ client.on("messageCreate", (message) => {
     adapterCreator: message.guild.voiceAdapterCreator,
   });
   if (userMessage.startsWith(prefix + "play")) {
-
     playSong(youtubeSearchTerm, message, connection)
       .catch(error => console.log(error))
       .then(() => console.log("Playing Song"))
@@ -88,9 +92,20 @@ client.on("messageCreate", (message) => {
     player.unpause()
     message.channel.send("Music has been resumed.")
   }
-});
-player.on(AudioPlayerStatus.Idle, () => {
-	console.log('The audio player has ended!');
+  player.on(AudioPlayerStatus.Idle, () => {
+    playlistQueue.splice(0, 1)
+    if(playlistQueue.length >= 1){
+      const youtubeSong = ytdl(playlistQueue[0].url, {filter: 'audioonly', highWaterMark: 1<<25});
+      const resource = createAudioResource(youtubeSong);
+      player.play(resource)
+      message.channel.send(`Playing ${playlistQueue[0].url}`)
+      player.on('error', error => {
+        console.error(`Error: ${error.message} with resource`);
+      });
+      console.log(playlistQueue);
+      connection.subscribe(player)
+    }
+  });
 });
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
