@@ -50,7 +50,6 @@ async function playSong(songTerm, messageHere, connector) {
         player.on('error', error => {
           console.error(`Error: ${error.message} with resource`);
         });
-        console.log(playlistQueue);
         connector.subscribe(player)
       }
     }
@@ -77,7 +76,13 @@ client.on("messageCreate", (message) => {
     playSong(youtubeSearchTerm, message, connection)
       .catch(error => console.log(error))
       .then(() => console.log("Playing Song"))
-
+  }
+  if (userMessage.startsWith(prefix + "commands")) {
+    message.channel.send("Here are a list of commands:")
+    message.channel.send("!play 'song title' : to play a song, or add a song to queue to the playlist if one is already playing")
+    message.channel.send("!pause : to pause the music")
+    message.channel.send("!resume : to resume playing of the music")
+    message.channel.send("!stop : to stop music and clear the playlist")
   }
   if (userMessage.startsWith(prefix + "stop")) {
     player.stop()
@@ -93,6 +98,7 @@ client.on("messageCreate", (message) => {
     message.channel.send("Music has been resumed.")
   }
   player.on(AudioPlayerStatus.Idle, () => {
+    console.log("Before slicing", playlistQueue);
     playlistQueue.splice(0, 1)
     if(playlistQueue.length >= 1){
       const youtubeSong = ytdl(playlistQueue[0].url, {filter: 'audioonly', highWaterMark: 1<<25});
