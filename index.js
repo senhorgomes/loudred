@@ -1,7 +1,6 @@
 const { token } = require('./config.json');
 const { Client, Intents } = require('discord.js');
 const ytdl = require('ytdl-core');
-// const { YTSearcher } = require('ytsearcher');
 const ytSearch = require('yt-search');
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus }= require('@discordjs/voice');
 
@@ -97,19 +96,33 @@ client.on("messageCreate", (message) => {
     player.unpause()
     message.channel.send("Music has been resumed.")
   }
+  if (userMessage.startsWith(prefix + "skip")) {
+    player.stop()
+    const youtubeSong = ytdl(playlistQueue[1].url, {filter: 'audioonly', highWaterMark: 1<<25});
+    const resource = createAudioResource(youtubeSong);
+    player.play(resource)
+    message.channel.send(`Playing ${playlistQueue[1].url}`)
+    player.on('error', error => {
+      console.error(`Error: ${error.message} with resource`);
+    });
+    connection.subscribe(player)
+    playlistQueue.splice(0, 1)
+  }
+  // [0]
+
   player.on(AudioPlayerStatus.Idle, () => {
     console.log("Before slicing", playlistQueue);
-    playlistQueue.splice(0, 1)
     if(playlistQueue.length >= 1){
-      const youtubeSong = ytdl(playlistQueue[0].url, {filter: 'audioonly', highWaterMark: 1<<25});
+      const youtubeSong = ytdl(playlistQueue[1].url, {filter: 'audioonly', highWaterMark: 1<<25});
       const resource = createAudioResource(youtubeSong);
       player.play(resource)
-      message.channel.send(`Playing ${playlistQueue[0].url}`)
+      message.channel.send(`Playing ${playlistQueue[1].url}`)
       player.on('error', error => {
         console.error(`Error: ${error.message} with resource`);
       });
-      console.log(playlistQueue);
       connection.subscribe(player)
+      playlistQueue.splice(0, 1)
+      console.log(playlistQueue);
     }
   });
 });
