@@ -76,17 +76,30 @@ client.on("messageCreate", (message) => {
       .catch(error => console.log(error))
       .then(() => console.log("Playing Song"))
   }
+  if (userMessage.startsWith(prefix + "delete-last")) {
+    playlistQueue.pop()
+  }
   if (userMessage.startsWith(prefix + "commands")) {
     message.channel.send("Here are a list of commands:")
     message.channel.send("!play 'song title' : to play a song, or add a song to queue to the playlist if one is already playing")
     message.channel.send("!pause : to pause the music")
     message.channel.send("!resume : to resume playing of the music")
     message.channel.send("!stop : to stop music and clear the playlist")
+    message.channel.send("!delete-last : to delete the last song added to the playlist")
+    message.channel.send("!skip : to skip the current song playing")
+    message.channel.send("!playlist : to show the current playlist")
   }
   if (userMessage.startsWith(prefix + "stop")) {
     player.stop()
     playlistQueue = []
     message.channel.send("Music stopped and playlist cleared.")
+  }
+  if (userMessage.startsWith(prefix + "playlist")) {
+    let songPlace = 1;
+    playlistQueue.forEach(song => 
+      message.channel.send(`${songPlace} - ${song.title}`),
+      songPlace ++
+    )
   }
   if (userMessage.startsWith(prefix + "pause")) {
     player.pause()
