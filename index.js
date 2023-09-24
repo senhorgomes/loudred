@@ -65,41 +65,28 @@ client.on("messageCreate", (message) => {
   const prefix = '!';
   const youtubeSearchTerm = userMessage.split(' ').slice(1).join(' ');
   // const command = argss.shift().toLowerCase();
-  
+  console.log("ID HERE!!!", voiceChannelThatUserIsIn)
   const connection = joinVoiceChannel({
     channelId: voiceChannelThatUserIsIn.id,
     guildId: voiceChannelThatUserIsIn.guild.id,
     adapterCreator: message.guild.voiceAdapterCreator,
   });
+  if (userMessage.startsWith(prefix + "check playlist")) {
+    let songPlace = 0;
+    playlistQueue.forEach(song => {
+      if(songPlace == 0) {
+        message.channel.send(`Currently playing - ${song.title}`)
+        songPlace ++
+      } else {
+        message.channel.send(`${songPlace} - ${song.title}`)
+        songPlace ++
+      }
+    })
+  }
   if (userMessage.startsWith(prefix + "play")) {
     playSong(youtubeSearchTerm, message, connection)
       .catch(error => console.log(error))
       .then(() => console.log("Playing Song"))
-  }
-  if (userMessage.startsWith(prefix + "delete-last")) {
-    playlistQueue.pop()
-  }
-  if (userMessage.startsWith(prefix + "commands")) {
-    message.channel.send("Here are a list of commands:")
-    message.channel.send("!play 'song title' : to play a song, or add a song to queue to the playlist if one is already playing")
-    message.channel.send("!pause : to pause the music")
-    message.channel.send("!resume : to resume playing of the music")
-    message.channel.send("!stop : to stop music and clear the playlist")
-    message.channel.send("!delete-last : to delete the last song added to the playlist")
-    message.channel.send("!skip : to skip the current song playing")
-    message.channel.send("!playlist : to show the current playlist")
-  }
-  if (userMessage.startsWith(prefix + "stop")) {
-    player.stop()
-    playlistQueue = []
-    message.channel.send("Music stopped and playlist cleared.")
-  }
-  if (userMessage.startsWith(prefix + "playlist")) {
-    let songPlace = 1;
-    playlistQueue.forEach(song => 
-      message.channel.send(`${songPlace} - ${song.title}`),
-      songPlace ++
-    )
   }
   if (userMessage.startsWith(prefix + "pause")) {
     player.pause()
@@ -108,6 +95,23 @@ client.on("messageCreate", (message) => {
   if (userMessage.startsWith(prefix + "resume")) {
     player.unpause()
     message.channel.send("Music has been resumed.")
+  }
+  if (userMessage.startsWith(prefix + "last")) {
+    playlistQueue.pop()
+  }
+  if (userMessage.startsWith(prefix + "delete")) {
+    const songPosition = userMessage.split(" ")[1];
+    if (songPosition == 0) {
+      message.channel.send("Sorry, that song is currently playing. Please use !skip")
+    } else {
+      message.channel.send(`Removing ${playlistQueue[songPosition].title} from the playlist.`)
+      playlistQueue.splice(songPosition, 1);
+    }
+  }
+  if (userMessage.startsWith(prefix + "stop")) {
+    player.stop()
+    playlistQueue = []
+    message.channel.send("Music stopped and playlist cleared.")
   }
   if (userMessage.startsWith(prefix + "skip")) {
     player.stop()
@@ -121,11 +125,22 @@ client.on("messageCreate", (message) => {
     connection.subscribe(player)
     playlistQueue.splice(0, 1)
   }
+  if (userMessage.startsWith(prefix + "commands")) {
+    message.channel.send("Here are a list of commands:")
+    message.channel.send("!play 'song title' : to play a song, or add a song to queue to the playlist if one is already playing")
+    message.channel.send("!pause : to pause the music")
+    message.channel.send("!resume : to resume playing of the music")
+    message.channel.send("!stop : to stop music and clear the playlist")
+    message.channel.send("!last : to delete the last song added to the playlist")
+    message.channel.send("!delete num : replace num with the position number of the song to delete it")
+    message.channel.send("!skip : to skip the current song playing")
+    message.channel.send("!check playlist : to show the current playlist")
+  }
   // [0]
 
   player.on(AudioPlayerStatus.Idle, () => {
     console.log("Before slicing", playlistQueue);
-    if(playlistQueue.length >= 1){
+    if(playlistQueue.length > 1){
       const youtubeSong = ytdl(playlistQueue[1].url, {filter: 'audioonly', highWaterMark: 1<<25});
       const resource = createAudioResource(youtubeSong);
       player.play(resource)
@@ -136,6 +151,8 @@ client.on("messageCreate", (message) => {
       connection.subscribe(player)
       playlistQueue.splice(0, 1)
       console.log(playlistQueue);
+    } else {
+      playlistQueue = []
     }
   });
 });
